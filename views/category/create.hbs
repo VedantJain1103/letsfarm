@@ -1,0 +1,16 @@
+<div class="container" style="max-width: 95%;">
+  <div class="error">
+    {{error}}
+  </div>
+  <form action="/category/create" method="post">
+    <div class="title">Category</div>
+    <div class="input-box">
+      <input type="text" name="name" placeholder="Name" required />
+      <div class="underline"></div>
+    </div>
+    <button class="primary">Create </button>
+  </form>
+  {{! <button onclick="window.location.href= '/resumes">Cancel</button> }}
+  <a href="/" class="button">Cancel</a>
+  {{! </button> }}
+</div>

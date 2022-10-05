@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Uploading</title>
+</head>
+<body>
+    <div>
+<table>
+  <tr>
+    <th>Name</th>
+    <th>Category</th>
+    <th>Price</th>
+    <th>Seller</th>
+    <th>Unit</th>
+    <th>Minimum Unit</th>
+    <th>Availabel Unit</th>
+    <th>Image</th>
+  </tr>
+ <% items.forEach(function(item) { %>
+    <tr>
+      <td><%=item.name%></th>
+      <td><%=item.category.name%></th>
+      <td><%=item.sellPrice%></th>
+      <td><%=item.seller.fullName%></th>
+      <td><%=item.unit%></th>
+      <td><%=item.minimumUnit%></th>
+      <td><%=item.availableUnit%></th>
+      <td><img src = "data:image/<%=item.image.img.contentType%>;base64,<%=item.image.img.data.toString('base64')%>" width:10%></td>
+    </tr>
+  <% }) %>
+</table>
+</div>
+</body>
+</html>

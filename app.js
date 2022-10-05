@@ -6,12 +6,20 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
+var bodyParser = require('body-parser');
+
+var fs = require('fs');
+var path = require('path');
+require('dotenv/config');
+
 
 const hbs = require('hbs');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var accountsRouter = require('./routes/accounts');
+var itemsRouter = require('./routes/items');
+var categoryRouter = require('./routes/category');
 
 var app = express();
 
@@ -29,7 +37,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/accounts', accountsRouter);
+app.use('/items', itemsRouter);
+app.use('/category', categoryRouter);
 
+//Database connection
 const uri = "mongodb+srv://vedant:vedant@letusfarm.odp3iea.mongodb.net/?retryWrites=true&w=majority";
 async function main() {
   const client = new MongoClient(uri);

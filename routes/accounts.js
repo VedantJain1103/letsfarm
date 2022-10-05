@@ -65,7 +65,7 @@ router.post('/sendVerificationCode', async (req, res) => {
             if (user.isEmailVerified) res.redirect('/accounts/signIn');
             else {
                 accountsServices.sendEmailVerification(email, function (error, status) {
-                    console.log("Request Posted for Sending COde");
+                    console.log("Request Posted for Sending Code");
                     if (error) {
                         res.redirect('error');
                     } else {

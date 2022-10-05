@@ -1,14 +1,15 @@
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const bcrypt = require('bcrypt');
 const sgMail = require('@sendgrid/mail')
+const dotenv = require('dotenv');
 
 const uri = "mongodb+srv://vedant:vedant@letusfarm.odp3iea.mongodb.net/?retryWrites=true&w=majority";
 const client = new MongoClient(uri);
 const database = client.db("LetUsFarm");
-const Users = database.collection("Users");
 
 const UserModel = require("../models/user")
 const VerificationModel = require('../models/verification');
+const callback = require('callback');
 
 function getUser(email, callback) {
     UserModel.findOne({ email: email }).exec(function (error, user) {
@@ -20,6 +21,16 @@ function getUser(email, callback) {
             return callback(false, user);
         }
     })
+}
+
+async function getUserById(id) {
+    try {
+        const user = await UserModel.findOne({ _id: id });
+        return user;
+    } catch (error) {
+        console.log(error);
+        return null;
+    }
 }
 
 function createUser(fullName, email, phone, password, callback) {
@@ -80,14 +91,15 @@ function sendEmailVerification(email, callback) {
                 code: code,
                 dateCreated: currDate
             })
-            newVerificationDbDoc.save();
             sendMail(email, code);
+            newVerificationDbDoc.save();
             return callback(false);
         }
     })
 }
 
 function sendMail(email, code) {
+    dotenv.config();
     sgMail.setApiKey(process.env.SENDGRID_API_KEY)
     const msg = {
         to: email, // Change to your recipient
@@ -162,6 +174,7 @@ function signIn(email, password, callback) {
 
 module.exports = {
     getUser,
+    getUserById,
     createUser,
     signIn,
     sendEmailVerification,

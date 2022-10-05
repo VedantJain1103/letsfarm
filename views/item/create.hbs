@@ -1,0 +1,73 @@
+<div class="container" style="max-width: 95%;">
+  <div class="error">
+    {{error}}
+  </div>
+  <form action="/items/createItem" method="post" enctype="multipart/form-data">
+    <div class="title">Product</div>
+    <div class="input-box">
+      <input type="text" name="name" placeholder="Name" required />
+      <div class="underline"></div>
+    </div>
+    <div class="input-box">
+      Category
+      <select name="category" id="category">
+        {{#each categories}}
+          <option value="{{this.name}}">{{this.name}}</option>
+        {{/each}}
+      </select>
+      <div class="underline"></div>
+    </div>
+    <div class="input-box">
+      <input type="number" name="costPrice" placeholder="Cost Price" required />
+      <div class="underline"></div>
+    </div>
+    <div class="input-box">
+      <input type="number" name="sellPrice" placeholder="Sell Price" required />
+      <div class="underline"></div>
+    </div>
+    <div class="input-box">
+      <input type="number" name="discount" placeholder="Discount" required />
+      <div class="underline"></div>
+    </div>
+    <div id="txtArea" style="border-bottom: 2px solid #ccc;">
+      <textarea
+        id="txtArea"
+        rows="3"
+        cols="50"
+        style="font-size:16px;font: 16px 'Lucida Grande', Helvetica, Arial, sans-serif; width:100%; height:auto;"
+        name="description"
+        placeholder="Description"
+        style="color: #767676;"
+        required
+      ></textarea>
+
+      <div class="underline"></div>
+    </div>
+    <div class="input-box">
+      Image
+      <input type="file" name="image" placeholder="upload image" required />
+      <div class="underline"></div>
+    </div>
+    <div class="input-box">
+      <input type="text" name="unit" placeholder="Unit" required />
+      <div class="underline"></div>
+    </div>
+    <div class="input-box">
+      <input type="number" name="minUnit" placeholder="Minimum Unit" required />
+      <div class="underline"></div>
+    </div>
+    <div class="input-box">
+      <input
+        type="number"
+        name="availUnit"
+        placeholder="Available Unit"
+        required
+      />
+      <div class="underline"></div>
+    </div>
+    <button class="primary">Create </button>
+  </form>
+  {{! <button onclick="window.location.href= '/resumes">Cancel</button> }}
+  <a href="/" class="button">Cancel</a>
+  {{! </button> }}
+</div>
