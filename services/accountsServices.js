@@ -2,8 +2,10 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 const bcrypt = require('bcrypt');
 const sgMail = require('@sendgrid/mail')
 const dotenv = require('dotenv');
+require('dotenv').config()
 
-const uri = "mongodb+srv://vedant:vedant@letusfarm.odp3iea.mongodb.net/?retryWrites=true&w=majority";
+
+const uri = "mongodb+srv://vedant:vedant@cluster0.kuo0csq.mongodb.net/letsfarm?retryWrites=true&w=majority";
 const client = new MongoClient(uri);
 const database = client.db("LetUsFarm");
 

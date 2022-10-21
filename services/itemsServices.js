@@ -1,11 +1,11 @@
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-
-const uri = "mongodb+srv://vedant:vedant@letusfarm.odp3iea.mongodb.net/?retryWrites=true&w=majority";
+const uri = "mongodb+srv://vedant:vedant@cluster0.kuo0csq.mongodb.net/letsfarm?retryWrites=true&w=majority";
 const client = new MongoClient(uri);
 const database = client.db("LetUsFarm");
 
 var categoryServices = require('../services/categoryServices');
 var accountsServices = require('../services/accountsServices');
+const { encrypt, decrypt } = require('../services/encryptionServices');
 
 const CategoryModel = require('../models/category');
 const ItemModel = require('../models/item');
@@ -20,11 +20,11 @@ const category = require('../models/category');
 
 var storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        console.log("f");
         cb(null, 'uploads')
     },
     filename: (req, file, cb) => {
-        console.log("s");
+        const { cipherTextEmail } = req.params;
+        const email = decrypt(cipherTextEmail);
         cb(null, 'vedantjain35@gmail.com-' + file.originalname)
     }
 });
@@ -42,7 +42,7 @@ async function viewItemList(callback) {
             {
                 $lookup:
                 {
-                    from: "users",
+                    from: "Users",
                     localField: "sellerId",
                     foreignField: "_id",
                     as: "seller"
@@ -54,7 +54,7 @@ async function viewItemList(callback) {
             {
                 $lookup:
                 {
-                    from: "categories",
+                    from: "Category",
                     localField: "categoryId",
                     foreignField: "_id",
                     as: "category",
@@ -65,7 +65,7 @@ async function viewItemList(callback) {
             },
             {
                 $lookup: {
-                    from: "images",
+                    from: "Images",
                     localField: "_id",
                     foreignField: "itemId",
                     as: "image",
@@ -98,7 +98,6 @@ function createItem(userEmail, itemName, category, image, costPrice, sellPrice, 
                     console.log("Category not found");
                     return callback('Category not found');
                 } else {
-                    console.log(category);
                     const categoryId = ObjectId(category[0]._id);
                     const sellerId = ObjectId(user[0]._id);
                     const newItem = ItemModel({

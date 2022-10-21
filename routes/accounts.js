@@ -1,8 +1,10 @@
 const express = require('express');
+require('dotenv').config()
 
 const router = express.Router();
 
 const accountsServices = require('../services/accountsServices');
+const { encrypt, decrypt } = require('../services/encryptionServices');
 
 router.get('/signIn', (req, res) => {
     res.render('accounts/signIn', { title: 'Express', email: '' });
@@ -23,7 +25,6 @@ router.get('/:email/verification', (req, res) => {
 
 router.post('/register', async (req, res) => {
     const { fullName, email, phone, password, confirmPassword } = req.body;
-    // try {
     if (password == null || (password != confirmPassword)) res.render('accounts/register', { error: "Passwords do not match" });
     else {
         let strongPasswordRe = new RegExp('(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9])(?=.{8,})');
@@ -40,18 +41,10 @@ router.post('/register', async (req, res) => {
                     res.redirect(`/accounts/sendVerificationCode`);
                 }
             });
-
-            // const result = await accountsServices.createUser(fullName, email, phone, password);
-            // if (result == "Email or Mobile Number already exists") res.render('accounts/register', { error: 'Email or Username already exists' });
-            // else res.redirect(`/accounts/sendVerificationCode`);
         } else {
             res.render('accounts/register', { error: 'Enter a valid Password', fullName, email, phone });
         }
     }
-    // } catch (err) {
-    //     console.log("===============");
-    //     res.render('accounts/register', { error: err.message });
-    // }
 });
 
 router.post('/sendVerificationCode', async (req, res) => {
@@ -103,7 +96,10 @@ router.post('/signIn', async (req, res) => {
             res.render('accounts/signIn', { error: msg, email: email });
         }
         else if (status) {
-            if (isVerified) res.redirect('/users');
+            if (isVerified) {
+                let ciphertextEmail = encrypt(email);
+                res.redirect(`/users/${ciphertextEmail}`);
+            }
             else res.redirect(`/accounts/sendVerificationCode`);
         }
         else {

@@ -41,7 +41,7 @@ app.use('/items', itemsRouter);
 app.use('/category', categoryRouter);
 
 //Database connection
-const uri = "mongodb+srv://vedant:vedant@letusfarm.odp3iea.mongodb.net/?retryWrites=true&w=majority";
+const uri = "mongodb+srv://vedant:vedant@cluster0.kuo0csq.mongodb.net/?retryWrites=true&w=majority";
 async function main() {
   const client = new MongoClient(uri);
 
@@ -58,7 +58,7 @@ async function main() {
 main().catch(console.error);
 
 mongoose.connect(
-  `mongodb+srv://vedant:vedant@letusfarm.odp3iea.mongodb.net/letusfarm?retryWrites=true&w=majority`,
+  `mongodb+srv://vedant:vedant@cluster0.kuo0csq.mongodb.net/letsfarm?retryWrites=true&w=majority`,
   {
     useNewUrlParser: true,
     useUnifiedTopology: true

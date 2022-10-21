@@ -4,47 +4,47 @@ var router = express.Router();
 
 var itemsServices = require('../services/itemsServices');
 var categoryServices = require('../services/categoryServices')
+const { encrypt, decrypt } = require('../services/encryptionServices');
 
 /* GET users listing. */
-router.get('/', async function (req, res, next) {
+router.get('/:cipherTextEmail', async function (req, res, next) {
+    const { cipherTextEmail } = req.params;
+    const email = decrypt(cipherTextEmail);
     try {
         itemsServices.viewItemList(function (error, items) {
             if (error) {
                 console.log(error);
             }
-            // console.log(images);
-            // res.contentType(images[0].img.contentType);
-            // res.send(images[0].img.data);
-            // console.log(items);
             res.render('item/listItems.ejs', { items: items });
         });
     } catch (error) {
         console.log(error);
-        res.redirect('/users');
+        res.redirect(`/users/${cipherTextEmail}`);
     }
 });
 
-router.get('/createItem', function (req, res, next) {
+router.get('/create/:cipherTextEmail', function (req, res, next) {
+    const { cipherTextEmail } = req.params;
+    const email = decrypt(cipherTextEmail);
     categoryServices.listCategory(function (error, result) {
         if (error) {
             res.send(error);
         } else {
-            res.render('item/create', { categories: result });
+            res.render('item/create', { categories: result, cipherTextEmail });
         }
     });
 });
 
-router.post('/createItem', itemsServices.upload.single('image'), function (req, res, next) {
+router.post('/create/:cipherTextEmail', itemsServices.upload.single('image'), function (req, res, next) {
     const { name, costPrice, category, sellPrice, discount, description, unit, minUnit, availUnit } = req.body;
     const image = req.file;
-    // const fileName = Date.now()+'-'+req.file.originalname;
-    // console.log(fileName, "abcadvchbadj vgb");
-    console.log(req.body);
-    itemsServices.createItem('vedantjain35@gmail.com', name, category, image, costPrice, sellPrice, discount, description, unit, minUnit, availUnit, function (error, success) {
+    const { cipherTextEmail } = req.params;
+    const email = decrypt(cipherTextEmail);
+    itemsServices.createItem(email, name, category, image, costPrice, sellPrice, discount, description, unit, minUnit, availUnit, function (error, success) {
         if (error) {
             console.log("----------Error occurred--------------");
         }
-        res.redirect('/users');
+        res.redirect(`/items/${cipherTextEmail}`);
     })
 });
 

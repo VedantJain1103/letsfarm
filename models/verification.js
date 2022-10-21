@@ -27,4 +27,4 @@ const VerificationSchema = new mongoose.Schema({
     }
 })
 
-module.exports = mongoose.model("Verification", VerificationSchema)
+module.exports = mongoose.model("Verification", VerificationSchema, "Verifications")
