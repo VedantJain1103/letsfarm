@@ -1,0 +1,80 @@
+<div class="container" style="max-width: 95%;">
+  <div class="error">
+    {{error}}
+  </div>
+  <form
+    action="/items/update/{{cipherTextItem}}/{{cipherTextEmail}}"
+    method="post"
+    enctype="multipart/form-data"
+  >
+    <div class="title">Product Update</div>
+    <div class="input-box">
+      <input type="text" name="name" placeholder="Name" />
+      <div class="underline"></div>
+    </div>
+    {{item.name}}
+    <div class="input-box">
+      Category
+      <select name="category" id="category">
+        {{#each categories}}
+          <option value="{{this.name}}">{{this.name}}</option>
+        {{/each}}
+      </select>
+      <div class="underline"></div>
+    </div>
+    {{item.category.name}}
+    <div class="input-box">
+      <input type="number" name="costPrice" placeholder="Cost Price" />
+      <div class="underline"></div>
+    </div>
+    {{item.costPrice}}
+    <div class="input-box">
+      <input type="number" name="sellPrice" placeholder="Sell Price" />
+      <div class="underline"></div>
+    </div>
+    {{item.sellPrice}}
+    <div class="input-box">
+      <input type="number" name="discount" placeholder="Discount" />
+      <div class="underline"></div>
+    </div>
+    {{item.discount}}
+    <div id="txtArea" style="border-bottom: 2px solid #ccc;">
+      <textarea
+        id="txtArea"
+        rows="3"
+        cols="50"
+        style="font-size:16px;font: 16px 'Lucida Grande', Helvetica, Arial, sans-serif; width:100%; height:auto;"
+        name="description"
+        placeholder="Description"
+        style="color: #767676;"
+      ></textarea>
+      <div class="underline"></div>
+    </div>
+    {{item.description}}
+    {{!-- <div class="input-box">
+      Image
+      <input type="file" name="image" placeholder="upload image" required />
+      <div class="underline"></div>
+    </div>
+    <img src="{{item.image.img}}" width="100px" height="100px" /> --}}
+    <div class="input-box">
+      <input type="text" name="unit" placeholder="Unit" />
+      <div class="underline"></div>
+    </div>
+    {{item.unit}}
+    <div class="input-box">
+      <input type="number" name="minUnit" placeholder="Minimum Unit" />
+      <div class="underline"></div>
+    </div>
+    {{item.minimumUnit}}
+    <div class="input-box">
+      <input type="number" name="availUnit" placeholder="Available Unit" />
+      <div class="underline"></div>
+    </div>
+    {{item.availableUnit}}
+    <button class="primary">Update </button>
+  </form>
+  {{! <button onclick="window.location.href= '/resumes">Cancel</button> }}
+  <a href="/items/{{cipherTextEmail}}" class="button">Cancel</a>
+  {{! </button> }}
+</div>

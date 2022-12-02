@@ -90,6 +90,7 @@ router.post('/:email/verification', (req, res) => {
 
 router.post('/signIn', async (req, res) => {
     const { email, password } = req.body;
+    console.log(req.body)
     accountsServices.signIn(email, password, function (error, status, isVerified) {
         if (error) {
             const msg = "Invalid Username or Password";
@@ -98,6 +99,7 @@ router.post('/signIn', async (req, res) => {
         else if (status) {
             if (isVerified) {
                 let ciphertextEmail = encrypt(email);
+                console.log(ciphertextEmail)
                 res.redirect(`/users/${ciphertextEmail}`);
             }
             else res.redirect(`/accounts/sendVerificationCode`);

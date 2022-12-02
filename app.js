@@ -48,7 +48,7 @@ async function main() {
   try {
     await client.connect();
 
-    console.log("database connected..........");
+    console.log("MongoDB connected..........");
   } catch (e) {
     console.error(e);
   } finally {
@@ -67,7 +67,7 @@ mongoose.connect(
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error: "));
 db.once("open", function () {
-  console.log("Connected successfully");
+  console.log("Mongoose Connected successfully");
 });
 
 

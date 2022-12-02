@@ -5,6 +5,7 @@ const database = client.db("LetUsFarm");
 
 var categoryServices = require('../services/categoryServices');
 var accountsServices = require('../services/accountsServices');
+const { uploadFile } = require('./s3');
 const { encrypt, decrypt } = require('../services/encryptionServices');
 
 const CategoryModel = require('../models/category');
@@ -13,7 +14,9 @@ const ImageModel = require('../models/image');
 const UserModel = require('../models/user');
 
 //multer
-var fs = require('fs');
+const fs = require('fs');
+const util = require('util');
+const unlinkFile = util.promisify(fs.unlink);
 var path = require('path');
 var multer = require('multer');
 const category = require('../models/category');
@@ -25,7 +28,16 @@ var storage = multer.diskStorage({
     filename: (req, file, cb) => {
         const { cipherTextEmail } = req.params;
         const email = decrypt(cipherTextEmail);
-        cb(null, 'vedantjain35@gmail.com-' + file.originalname)
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        let mm = today.getMonth() + 1; // Months start at 0!
+        let dd = today.getDate();
+
+        if (dd < 10) dd = '0' + dd;
+        if (mm < 10) mm = '0' + mm;
+
+        const formattedToday = dd + '' + mm + '' + yyyy;
+        cb(null, formattedToday + '-' + email + '-' + file.originalname)
     }
 });
 var upload = multer({ storage: storage });
@@ -75,10 +87,126 @@ async function viewItemList(callback) {
                 $unwind: `$image`,
             },
         ]);
+        const data = JSON.stringify(items);
+        // console.log(data);
         return callback(null, items);
     } catch (error) {
         return callback(error);
     }
+}
+
+async function viewItemListOfUser(email, callback) {
+    try {
+        const result = [];
+        // const items = await ItemModel.find({}).limit(20);
+        UserModel.findOne({ email: email }, (error, user) => {
+            if (error) {
+                console.log(error);
+                return callback(error);
+            }
+            else {
+                ItemModel.aggregate([
+                    {
+                        $match: { sellerId: user._id },
+                    },
+                    {
+                        $lookup:
+                        {
+                            from: "Users",
+                            localField: "sellerId",
+                            foreignField: "_id",
+                            as: "seller"
+                        }
+                    },
+                    {
+                        $unwind: `$seller`
+                    },
+                    {
+                        $lookup:
+                        {
+                            from: "Category",
+                            localField: "categoryId",
+                            foreignField: "_id",
+                            as: "category",
+                        }
+                    },
+                    {
+                        $unwind: `$category`,
+                    },
+                    {
+                        $lookup: {
+                            from: "Images",
+                            localField: "_id",
+                            foreignField: "itemId",
+                            as: "image",
+                        }
+                    },
+                    {
+                        $unwind: `$image`,
+                    },
+                ], (error, items) => {
+                    if (error) {
+                        console.log(error);
+                        return callback(error);
+                    } else {
+                        return callback(null, items);
+                    }
+                });
+            }
+        });
+    } catch (error) {
+        return callback(error);
+    }
+}
+
+function getItemById(id, callback) {
+    ItemModel.aggregate([
+        {
+            $match: { _id: ObjectId(id) },
+        },
+        {
+            $lookup:
+            {
+                from: "Users",
+                localField: "sellerId",
+                foreignField: "_id",
+                as: "seller"
+            }
+        },
+        {
+            $unwind: `$seller`
+        },
+        {
+            $lookup:
+            {
+                from: "Category",
+                localField: "categoryId",
+                foreignField: "_id",
+                as: "category",
+            }
+        },
+        {
+            $unwind: `$category`,
+        },
+        {
+            $lookup: {
+                from: "Images",
+                localField: "_id",
+                foreignField: "itemId",
+                as: "image",
+            }
+        },
+        {
+            $unwind: `$image`,
+        },
+    ], (error, items) => {
+        if (error) {
+            console.log(error);
+            return callback(error);
+        } else {
+            return callback(null, items);
+        }
+    });
 }
 
 function createItem(userEmail, itemName, category, image, costPrice, sellPrice, discount, description, unit, minUnit, availUnit, callback) {
@@ -113,7 +241,7 @@ function createItem(userEmail, itemName, category, image, costPrice, sellPrice, 
                         availableUnit: availUnit,
                     });
                     // console.log(newItem);
-                    newItem.save(function (error3, item) {
+                    newItem.save(async function (error3, item) {
                         if (error3) {
                             console.log(error3);
                             return callback(error3);
@@ -121,13 +249,11 @@ function createItem(userEmail, itemName, category, image, costPrice, sellPrice, 
                             console.log("Item not saved");
                             return callback('Item not saved');
                         } else {
-
+                            const result = await uploadFile(image);
+                            await unlinkFile(image.path);
                             const newImage = new ImageModel({
                                 itemId: item._id,
-                                img: {
-                                    data: fs.readFileSync(path.join(__dirname + '/../uploads/' + 'vedantjain35@gmail.com' + '-' + image.originalname)),
-                                    contentType: 'image/jpeg'
-                                },
+                                img: `/items/image/${result.key}`,
                                 isDisplayImage: true,
                             })
 
@@ -149,8 +275,26 @@ function createItem(userEmail, itemName, category, image, costPrice, sellPrice, 
     })
 };
 
+async function updateItem(itemId, name, costPrice, category, sellPrice, discount, description, unit, minUnit, availUnit, callback) {
+    try {
+        const updatedItem = await ItemModel.findOneAndUpdate(
+            { _id: ObjectId(itemId) },
+            {
+                name: name, costPrice: costPrice, category: category, sellPrice: sellPrice, discount: discount, description: description, minimumUnit: minUnit, availableUnit: availUnit, unit: unit,
+            },
+            { new: true }
+        );
+        return callback(null, updatedItem);
+    } catch (error) {
+        return callback(error);
+    }
+}
+
 module.exports = {
     upload,
+    viewItemListOfUser,
     viewItemList,
+    getItemById,
     createItem,
+    updateItem,
 };

@@ -27,6 +27,17 @@ async function getCategoryById(id) {
         return null;
     }
 }
+
+function getCategoryByName(name, callback) {
+    CategoryModel.findOne({ name }, (error, result) => {
+        if (error) {
+            return callback(error);
+        } else {
+            return callback(null, result);
+        }
+    })
+}
+
 function create(userEmail, categoryName, callback) {
     UserModel.find({ email: userEmail }, (error, user) => {
         if (error) {
@@ -63,5 +74,6 @@ function create(userEmail, categoryName, callback) {
 module.exports = {
     listCategory,
     getCategoryById,
+    getCategoryByName,
     create,
 };
