@@ -3,8 +3,10 @@ var router = express.Router();
 
 const category = require('../models/category');
 
+var accountsServices = require('../services/accountsServices');
 var itemsServices = require('../services/itemsServices');
 var categoryServices = require('../services/categoryServices')
+
 const { encrypt, decrypt } = require('../services/encryptionServices');
 const { getFileStream } = require('../services/s3');
 
@@ -17,7 +19,7 @@ router.get('/image/:key', (req, res) => {
     readStream.pipe(res)
 })
 
-router.get('/:cipherTextEmail', async function (req, res, next) {
+router.get('/:cipherTextEmail', accountsServices.isAuthentic, async function (req, res, next) {
     const { cipherTextEmail } = req.params;
     const email = decrypt(cipherTextEmail);
     try {
@@ -41,7 +43,7 @@ router.get('/:cipherTextEmail', async function (req, res, next) {
     }
 });
 
-router.get('/c/:cipherTextEmail', async function (req, res, next) {
+router.get('/c/:cipherTextEmail', accountsServices.isAuthentic, async function (req, res, next) {
     const { cipherTextEmail } = req.params;
     const email = decrypt(cipherTextEmail);
     try {
@@ -64,7 +66,7 @@ router.get('/c/:cipherTextEmail', async function (req, res, next) {
     }
 })
 
-router.get('/view/:cipherTextItem/:cipherTextEmail', async function (req, res, next) {
+router.get('/view/:cipherTextItem/:cipherTextEmail', accountsServices.isAuthentic, async function (req, res, next) {
     const { cipherTextEmail, cipherTextItem } = req.params;
     const email = decrypt(cipherTextEmail);
     const itemId = decrypt(cipherTextItem);
@@ -77,7 +79,7 @@ router.get('/view/:cipherTextItem/:cipherTextEmail', async function (req, res, n
     })
 })
 
-router.get('/create/:cipherTextEmail', function (req, res, next) {
+router.get('/create/:cipherTextEmail',accountsServices.isAuthentic, function (req, res, next) {
     const { cipherTextEmail } = req.params;
     const email = decrypt(cipherTextEmail);
     categoryServices.listCategory(function (error, result) {
@@ -89,7 +91,7 @@ router.get('/create/:cipherTextEmail', function (req, res, next) {
     });
 });
 
-router.post('/create/:cipherTextEmail', itemsServices.upload.single('image'), function (req, res, next) {
+router.post('/create/:cipherTextEmail',accountsServices.isAuthentic, itemsServices.upload.single('image'), function (req, res, next) {
     const { name, costPrice, category, sellPrice, discount, description, unit, minUnit, availUnit } = req.body;
     const image = req.file;
     const { cipherTextEmail } = req.params;
@@ -102,7 +104,7 @@ router.post('/create/:cipherTextEmail', itemsServices.upload.single('image'), fu
     })
 });
 
-router.get('/update/:cipherTextItem/:cipherTextEmail', function (req, res, next) {
+router.get('/update/:cipherTextItem/:cipherTextEmail',accountsServices.isAuthentic, function (req, res, next) {
     const { cipherTextItem, cipherTextEmail } = req.params;
     const email = decrypt(cipherTextEmail);
     const itemId = decrypt(cipherTextItem);
@@ -122,9 +124,10 @@ router.get('/update/:cipherTextItem/:cipherTextEmail', function (req, res, next)
     })
 });
 
-router.post('/update/:cipherTextItem/:cipherTextEmail', function (req, res, next) {
+router.post('/update/:cipherTextItem/:cipherTextEmail',accountsServices.isAuthentic, function (req, res) {
     const { cipherTextItem, cipherTextEmail } = req.params;
-    let { name, costPrice, category, sellPrice, discount, description, unit, minUnit, availUnit } = req.body;
+    let { name, costPrice, category, sellPrice, discount, description, unit, minimumUnit, availableUnit } = req.body;
+    console.log(req.body)
     const email = decrypt(cipherTextEmail);
     const itemId = decrypt(cipherTextItem);
     itemsServices.getItemById(itemId, function (error, item) {
@@ -134,33 +137,69 @@ router.post('/update/:cipherTextItem/:cipherTextEmail', function (req, res, next
             if (email != item[0].seller.email) {
                 res.send('Invalid authentication');
             } else {
-                if (name == null) name = item[0].name;
-                if (costPrice == null) costPrice = item[0].costPrice;
-                if (category == null) category = item[0].category;
-                if (sellPrice == null) sellPrice = item[0].sellPrice;
-                if (discount == null) discount = item[0].discount;
-                if (description == null) description = item[0].description;
-                if (unit == null) unit = item[0].unit;
-                if (minUnit == null) minUnit = item[0].minimumUnit;
-                if (availUnit == null) availUnit = item[0].availableUnit;
-
-                if (costPrice < 0 || sellPrice < 0 || discount < 0 || minUnit < 0 || availUnit < 0) {
+                if (costPrice < 0 || sellPrice < 0 || discount < 0 || minimumUnit < 0 || availableUnit < 0) {
                     res.send('Invalid Updation Request');
                 } else {
-                    categoryServices.getCategoryByName(category, function (errorCategory, categoryResult) {
-                        itemsServices.updateItem(itemId, name, costPrice, category, sellPrice, discount, description, unit, minUnit, availUnit, function (errorUpdate, updatedItem) {
-                            if (errorUpdate) {
-                                res.send(errorUpdate);
-                            } else {
-                                console.log(updatedItem);
-                                res.redirect(`/items/${cipherTextEmail}`);
+                    if (category) {
+                        categoryServices.getCategoryByName(category, function (errorCategory, categoryResult) {
+                            if (errorCategory) {
+                                res.send(errorCategory);
+                            }
+                            else {
+                                itemsServices.updateItem(itemId, name || item[0].name, costPrice || item[0].costPrice, categoryResult, sellPrice || item[0].sellPrice, discount || item[0].discount, description || item[0].description, unit || item[0].unit, minimumUnit || item[0].minimumUnit, availableUnit || item[0].availableUnit, function (errorUpdate, updatedItem) {
+                                    if (errorUpdate) {
+                                        res.send(errorUpdate);
+                                    } else {
+                                        console.log(updatedItem);
+                                        res.redirect(`/items/${cipherTextEmail}`);
+                                    }
+                                });
                             }
                         });
-                    });
+                    } else {
+                        categoryServices.getCategoryById(item[0].categoryId, function (errorCategory, categoryResult) {
+                            if (errorCategory) {
+                                res.send(errorCategory);
+                            } else {
+                                itemsServices.updateItem(itemId, name, costPrice, categoryResult, sellPrice, discount, description, unit, minUnit, availUnit, function (errorUpdate, updatedItem) {
+                                    if (errorUpdate) {
+                                        res.send(errorUpdate);
+                                    } else {
+                                        console.log(updatedItem);
+                                        res.redirect(`/items/${cipherTextEmail}`);
+                                    }
+                                });
+                            }
+                        });
+                    }
                 }
             }
         }
     });
+});
+
+router.post('/updateItemImage/:cipherTextItem/:cipherTextEmail',accountsServices.isAuthentic, itemsServices.upload.single('image'), function (req, res, next) {
+    const { cipherTextEmail, cipherTextItem } = req.params;
+    const image = req.file;
+    const email = decrypt(cipherTextEmail);
+    const itemId = decrypt(cipherTextItem);
+    itemsServices.getItemById(itemId, (errorItem, itemResult) => {
+        if (errorItem) { 
+            res.send(errorItem);
+        } else {
+            if (email != itemResult[0].seller.email) {
+                res.send('Invalid Authentication');
+            } else {
+                itemsServices.updateItemImage(itemId, image, (error, result) => {
+                    if (error) {
+                        res.send(error);
+                    } else {
+                        res.redirect(`/items/${cipherTextEmail}`);
+                    }
+                })
+            }
+        }
+    })
 })
 
 module.exports = router;

@@ -2,7 +2,7 @@ const { MongoClient, ServerApiVersion } = require('mongodb');
 const bcrypt = require('bcrypt');
 const sgMail = require('@sendgrid/mail')
 const dotenv = require('dotenv');
-require('dotenv').config()
+require('dotenv').config();
 
 
 const uri = "mongodb+srv://vedant:vedant@cluster0.kuo0csq.mongodb.net/letsfarm?retryWrites=true&w=majority";
@@ -13,6 +13,24 @@ const UserModel = require("../models/user")
 const VerificationModel = require('../models/verification');
 const callback = require('callback');
 
+const { encrypt, decrypt } = require('../services/encryptionServices');
+
+/*-----------Middleware----------------*/
+function isAuthentic(req, res, next) {
+    const { cipherTextEmail } = req.params;
+    const email = decrypt(cipherTextEmail);
+    UserModel.findOne({ email: email }).exec((error, user) => {
+        if (error) {
+            res.send(error);
+        }
+        else {
+            if (user) next();
+            else res.send("User not Found.\nPlease Log-in.");
+        }
+    })
+}
+
+/*-------------------Functions----------------------*/
 function getUser(email, callback) {
     UserModel.findOne({ email: email }).exec(function (error, user) {
         if (error) {
@@ -85,9 +103,9 @@ function sendEmailVerification(email, callback) {
             currDate = Date.now();
             console.log("verification present");
             VerificationModel.findOneAndDelete({ email: email }, function (error) {
-                if (error) return callback(true);
-            });
-            let code = generateVerificationCode();
+                if (error) return callback(true); 
+                else {
+                    let code = generateVerificationCode();
             const newVerificationDbDoc = new VerificationModel({
                 email: email,
                 code: code,
@@ -95,17 +113,20 @@ function sendEmailVerification(email, callback) {
             })
             sendMail(email, code);
             newVerificationDbDoc.save();
-            return callback(false);
+                    return callback(false);
+                }
+            });
+            
         }
     })
 }
 
 function sendMail(email, code) {
-    dotenv.config();
     sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+    console.log(email, code);
     const msg = {
         to: email, // Change to your recipient
-        from: 'vedantjain1008@gmail.com', // Change to your verified sender
+        from: 'vedantjain35@gmail.com', // Change to your verified sender
         subject: 'Emaill Verification',
         text: `Your email verifcation code is ${code}`,
         html: `<h1>Thank you for registering</h1><br><strong>Your email verifcation code is ${code}</strong><br>
@@ -175,6 +196,7 @@ function signIn(email, password, callback) {
 }
 
 module.exports = {
+    isAuthentic,
     getUser,
     getUserById,
     createUser,

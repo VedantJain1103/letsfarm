@@ -41,6 +41,7 @@ var storage = multer.diskStorage({
     }
 });
 var upload = multer({ storage: storage });
+
 //
 
 async function viewItemList(callback) {
@@ -275,19 +276,46 @@ function createItem(userEmail, itemName, category, image, costPrice, sellPrice, 
     })
 };
 
-async function updateItem(itemId, name, costPrice, category, sellPrice, discount, description, unit, minUnit, availUnit, callback) {
-    try {
-        const updatedItem = await ItemModel.findOneAndUpdate(
-            { _id: ObjectId(itemId) },
+function updateItem(itemId, name, costPrice, category, sellPrice, discount, description, unit, minimumUnit, availableUnit, callback) {
+
+        ItemModel.updateOne(
+            { "_id": ObjectId(itemId) },
             {
-                name: name, costPrice: costPrice, category: category, sellPrice: sellPrice, discount: discount, description: description, minimumUnit: minUnit, availableUnit: availUnit, unit: unit,
+                $set: {
+                    name, costPrice, categoryId: category._id, sellPrice, discount, description, minimumUnit, availableUnit, unit,
+                }
             },
-            { new: true }
+            { new: true },
+            (error, result) => {
+                if (error) {
+                    callback(error);
+                } else {
+                    callback(null, result);
+                }
+            }
         );
-        return callback(null, updatedItem);
-    } catch (error) {
-        return callback(error);
-    }
+}
+
+async function updateItemImage(itemId, image, callback) {
+    const imageResult = await uploadFile(image);
+    await unlinkFile(image.path);
+    console.log(imageResult);
+    ImageModel.updateOne(
+        { "itemId": ObjectId(itemId) },
+        {
+            $set: {
+                img: `/items/image/${imageResult.key}`
+            }
+        },
+        { new: true },
+        (error, result) => {
+            if (error) {
+                return callback(error);
+            } else {
+                return callback(null, result);
+            }
+        }
+    )
 }
 
 module.exports = {
@@ -297,4 +325,5 @@ module.exports = {
     getItemById,
     createItem,
     updateItem,
+    updateItemImage,
 };

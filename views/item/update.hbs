@@ -5,7 +5,7 @@
   <form
     action="/items/update/{{cipherTextItem}}/{{cipherTextEmail}}"
     method="post"
-    enctype="multipart/form-data"
+    {{!-- enctype="multipart/form-data" --}}
   >
     <div class="title">Product Update</div>
     <div class="input-box">
@@ -51,28 +51,31 @@
       <div class="underline"></div>
     </div>
     {{item.description}}
-    {{!-- <div class="input-box">
-      Image
-      <input type="file" name="image" placeholder="upload image" required />
-      <div class="underline"></div>
-    </div>
-    <img src="{{item.image.img}}" width="100px" height="100px" /> --}}
     <div class="input-box">
       <input type="text" name="unit" placeholder="Unit" />
       <div class="underline"></div>
     </div>
     {{item.unit}}
     <div class="input-box">
-      <input type="number" name="minUnit" placeholder="Minimum Unit" />
+      <input type="number" name="minimumUnit" placeholder="Minimum Unit" />
       <div class="underline"></div>
     </div>
     {{item.minimumUnit}}
     <div class="input-box">
-      <input type="number" name="availUnit" placeholder="Available Unit" />
+      <input type="number" name="availableUnit" placeholder="Available Unit" />
       <div class="underline"></div>
     </div>
     {{item.availableUnit}}
-    <button class="primary">Update </button>
+    <button class="primary">Update Details</button>
+  </form>
+  <form action="/items/updateItemImage/{{cipherTextItem}}/{{cipherTextEmail}}" method="post" enctype="multipart/form-data">
+  <div class="input-box">
+    Image
+    <input type="file" name="image" placeholder="upload image" required />
+    <div class="underline"></div>
+  </div>
+  <img src="{{item.image.img}}" width="100px" height="100px" />
+  <button class="primary">Update Item Image</button>
   </form>
   {{! <button onclick="window.location.href= '/resumes">Cancel</button> }}
   <a href="/items/{{cipherTextEmail}}" class="button">Cancel</a>

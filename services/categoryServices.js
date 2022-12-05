@@ -18,14 +18,15 @@ function listCategory(callback) {
     })
 }
 
-async function getCategoryById(id) {
-    try {
-        const category = await CategoryModel.findOne({ _id: ObjectId(id) });
-        return category;
-    } catch (error) {
-        console.log(error);
-        return null;
-    }
+function getCategoryById(id, callback) {
+    console.log(id);
+    CategoryModel.findOne({ _id: ObjectId(id) }, (error, category) => {
+        if (error) {
+            return callback(error);
+        } else {
+            return callback(null, category);
+        }
+        });
 }
 
 function getCategoryByName(name, callback) {

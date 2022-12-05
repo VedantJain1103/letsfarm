@@ -1,29 +1,29 @@
 var express = require('express');
 var router = express.Router();
 
+var accountsServices = require('../services/accountsServices');
 var categoryServices = require('../services/categoryServices');
+
 const { encrypt, decrypt } = require('../services/encryptionServices');
 
 /* GET users listing. */
-router.get('/:cipherTextEmail', function (req, res, next) {
-    imgModel.find({}, (err, items) => {
-        if (err) {
-            console.log(err);
-            res.status(500).send('An error occurred', err);
+router.get('/:cipherTextEmail',accountsServices.isAuthentic, function (req, res, next) {
+    categoryServices.listCategory((error, categories) => {
+        if (error) {
+            res.send(error);
+        } else {
+            res.send(categories);
         }
-        else {
-            res.render('imagesPage', { items: items });
-        }
-    });
+    })
 });
 
-router.get('/create/:cipherTextEmail', function (req, res, next) {
+router.get('/create/:cipherTextEmail',accountsServices.isAuthentic, function (req, res, next) {
     const { cipherTextEmail } = req.params;
     const email = decrypt(cipherTextEmail);
     res.render('category/create', { cipherTextEmail });
 });
 
-router.post('/create/:cipherTextEmail', function (req, res, next) {
+router.post('/create/:cipherTextEmail', accountsServices.isAuthentic, function (req, res, next) {
     const { name } = req.body;
     const { cipherTextEmail } = req.params;
     const email = decrypt(cipherTextEmail);
@@ -31,7 +31,7 @@ router.post('/create/:cipherTextEmail', function (req, res, next) {
         if (error) {
             console.log(error);
         }
-        res.redirect('/users');
+        res.redirect(`/items/{{$cipherTextEmail}}`);
     })
 });
 
