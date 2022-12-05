@@ -49,8 +49,8 @@ function create(userEmail, categoryName, callback) {
             CategoryModel.find({ name: categoryName }, (error2, category) => {
                 if (error2) {
                     return callback(error2);
-                } else if (!category) {
-                    return callback('Category not found');
+                } else if (category) {
+                    return callback('Category already exists');
                 } else {
                     const userId = user[0]._id;
                     const newCategory = new CategoryModel({
