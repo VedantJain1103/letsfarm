@@ -127,40 +127,35 @@ function generateVerificationCode() {
 }
 
 function sendEmailVerification(email, callback) {
-    VerificationModel.findOne({ email: email }).exec(function (error, verifcation) {
-        if (error) {
-            return callback(true);
-        } else if (!verifcation) {
-            let code = generateVerificationCode();
-            let currDate = Date.now();
-            const newVerificationDbDoc = new VerificationModel({
-                email: email,
-                code: code,
-                dateCreated: currDate
-            })
-            newVerificationDbDoc.save();
-            sendMail(email, code);
-            return callback(false);
-        } else {
-            currDate = Date.now();
-            console.log("verification present");
-            VerificationModel.findOneAndDelete({ email: email }, function (error) {
-                if (error) return callback(true); 
-                else {
-                    let code = generateVerificationCode();
-            const newVerificationDbDoc = new VerificationModel({
-                email: email,
-                code: code,
-                dateCreated: currDate
-            })
-            sendMail(email, code);
-            newVerificationDbDoc.save();
-                    return callback(false);
-                }
-            });
-            
+    let code = generateVerificationCode();
+    const reqBody = {
+        userEmail: email,
+        code: code
+    };
+    // sendMail(email, code);
+    console.log(email, code);
+    fetch(
+        "https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/createVerification?secret=alwaysShine",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                // 'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: JSON.stringify(reqBody),
         }
-    })
+    )
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (data) {
+            console.log("Request succeeded with JSON response", data);
+            return callback(null);
+        })
+        .catch(function (error) {
+            console.log("Request failed", error);
+            return callback(error);
+        });
 }
 
 function sendMail(email, code) {
@@ -184,35 +179,67 @@ function sendMail(email, code) {
         })
 }
 
-function checkVerification(email, code, callback) {
-    VerificationModel.findOne({ email: email }).exec(function (error, verification) {
-        if (error) {
-            return callback("An error occured");
-        } else if (!verification) {
-            return callback(false, false);
-        } else {
-            const currDate = Date.now();
-            if (currDate - verification.createdAt > 600000) {
-                VerificationModel.findOneAndDelete({ email: email }, function (error) {
-                    if (error) {
-                        return callback(error);
-                    }
-                });
-                return callback("Code Expired");
-            }
-            if (verification.code === Number(code)) {
-                UserModel.findOneAndUpdate({ email: email }, { isEmailVerified: true }, function (error, user) {
-                    if (error) return callback(false, false, false);
-                });
-                VerificationModel.findOneAndDelete({ email: email }, function (error) {
-                    if (error) return callback(false, false, false);
-                });
-                return callback(null, true, true);
-            } else {
-                return callback("Invalid Code and Email Combination", true, false);
-            }
+async function checkVerification(email, code, callback) {
+    const verification = await fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getVerificationByEmail?secret=alwaysShine&userEmail="+email, {
+            method: "GET",
+        }).then(function (response) {
+            return response.json();
+        }).then(function (data) {
+            // console.log('Request succeeded with JSON response', data);
+            return data;
+        }).catch(function (error) {
+            console.log('Request failed', error);
+            return callback(error);
+        });
+    if (verification) {
+        const currDate = Date.now();
+        if (currDate - verification.createdAt > 600000) {
+            sendEmailVerification(email, function (error) {
+                if (error) return callback(error);
+                else {
+                    return callback("Code Expired. We have sent a new verification Code");
+                }
+            });
         }
-    })
+        else if (verification.code == code) {
+            const reqBody = {
+                userEmail: email,
+                verificationStatus: true
+            }
+            fetch(
+                "https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/updateUserEmailVerificationStatusByEmail?secret=alwaysShine",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        // 'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: JSON.stringify(reqBody),
+                }
+            )
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    // console.log("send response")
+                    return callback(null,true);
+                })
+                .catch(function (error) {
+                    console.log("Request failed", error);
+                    return callback(error);
+                });
+        }
+        else {
+            return callback("Incorrect Code");
+        }
+    } else {
+        sendEmailVerification(email, function (error) {
+            if (error) return callback(error);
+            else {
+                return callback("We have sent a verification Code");
+            }
+        })
+    }
 }
 async function signIn(email, password, callback) {
     const user = await fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getUserByEmail?secret=alwaysShine&email="+email, {

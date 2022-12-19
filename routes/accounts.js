@@ -14,10 +14,6 @@ router.get('/register', (req, res) => {
     res.render('accounts/register');
 });
 
-router.get('/sendVerificationCode', (req, res) => {
-    res.render('accounts/sendVerificationCode');
-})
-
 router.get('/:email/verification', (req, res) => {
     const { email } = req.params;
     res.render('accounts/verification', { email: email });
@@ -47,50 +43,27 @@ router.post('/register', async (req, res) => {
     }
 });
 
-router.post('/sendVerificationCode', async (req, res) => {
-    const { email } = req.body;
-    accountsServices.getUser(email, function (error, user) {
-        if (error) {
-            res.redirect('/accounts/register');
-        } else if (!user) {
-            res.redirect('/accounts/register');
-        } else {
-            if (user.isEmailVerified) res.redirect('/accounts/signIn');
-            else {
-                accountsServices.sendEmailVerification(email, function (error, status) {
-                    console.log("Request Posted for Sending Code");
-                    if (error) {
-                        res.redirect('error');
-                    } else {
-                        res.redirect(`/accounts/${email}/verification`);
-                    }
-                });
-            }
-        }
-    });
-})
 
-router.post('/:email/verification', (req, res) => {
-    const { email } = req.params;
-    const { code } = req.body;
-    accountsServices.checkVerification(email, code, function (error, verifcationCodePresent, success) {
-        if (error) {
-            res.render('accounts/verification', { error: error, email: email });
-        } else if (!verifcationCodePresent) {
-            res.redirect(`/accounts/sendVerificationCode`);
-        } else {
-            if (success) {
-                res.redirect('/accounts/signIn');
-            } else {
-                res.render('accounts/verification', { email: email, error: error });
+router.post('/:email/verification', async (req, res) => {
+    try {
+        const { email } = req.params;
+        const { code } = req.body;
+        await accountsServices.checkVerification(email, code, function (error, status) {
+            if (error) {
+                console.log(error);
+                res.render('accounts/verfication', { error:error, email:email });
+            } else if (status) {
+                const ciphertextEmail = encrypt(email);;
+                res.redirect(`/users/${ciphertextEmail}`);
             }
-        }
-    });
+        })
+    } catch (error) {
+        res.render('accounts/verfication', { error, email });
+    }
 });
 
 router.post('/signIn', async (req, res) => {
     const { email, password } = req.body;
-    console.log(req.body)
     accountsServices.signIn(email, password, function (error, status, isVerified) {
         if (error) {
             const msg = "Invalid Username or Password";
@@ -99,10 +72,17 @@ router.post('/signIn', async (req, res) => {
         else if (status) {
             if (isVerified) {
                 let ciphertextEmail = encrypt(email);
-                console.log(ciphertextEmail)
                 res.redirect(`/users/${ciphertextEmail}`);
             }
-            else res.redirect(`/accounts/sendVerificationCode`);
+            else {
+                accountsServices.sendEmailVerification(email, function (error) {
+                    if (error) {
+                        res.render('accounts/signIn', { error, email });
+                    } else {
+                        res.redirect(`/accounts/` + email + `/verification`);
+                    }
+                });
+            }
         }
         else {
             res.render('accounts/signIn', { error: "An error occurred", email });

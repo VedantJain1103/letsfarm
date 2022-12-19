@@ -5,7 +5,7 @@ const database = client.db("LetUsFarm");
 
 var categoryServices = require('../services/categoryServices');
 var accountsServices = require('../services/accountsServices');
-const { uploadFile } = require('./s3');
+const itemImageS3 = require('./itemImageS3');
 const { encrypt, decrypt } = require('../services/encryptionServices');
 
 const CategoryModel = require('../models/category');
@@ -19,7 +19,6 @@ const util = require('util');
 const unlinkFile = util.promisify(fs.unlink);
 var path = require('path');
 var multer = require('multer');
-const category = require('../models/category');
 
 var storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -135,7 +134,7 @@ async function createItem(userEmail, itemName, category, image, costPrice, sellP
                     return callback(error);
                 });
     //adding item image
-    const result = await uploadFile(image); // UPLOADING IMAGE
+    const result = await itemImageS3.uploadFile(image); // UPLOADING IMAGE
     await unlinkFile(image.path); //DELETING FROM SERVER DEVICE STORAGE
     const imageReqBody = {
         itemId: item.insertedId,

@@ -8,13 +8,13 @@ var itemsServices = require('../services/itemsServices');
 var categoryServices = require('../services/categoryServices')
 
 const { encrypt, decrypt } = require('../services/encryptionServices');
-const { getFileStream } = require('../services/s3');
+const itemImageS3 = require('../services/itemImageS3');
 
-/* GET users listing. */
+
 router.get('/image/:key', (req, res) => {
     const { key } = req.params;
     console.log(key)
-    const readStream = getFileStream(key)
+    const readStream = itemImageS3.getFileStream(key)
 
     readStream.pipe(res)
 })
