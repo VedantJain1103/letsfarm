@@ -31,7 +31,7 @@ router.post('/create/:cipherTextEmail', accountsServices.isAuthentic, function (
         if (error) {
             console.log(error);
         }
-        res.redirect(`/items/{{$cipherTextEmail}}`);
+        res.redirect(`/category/`+cipherTextEmail);
     })
 });
 

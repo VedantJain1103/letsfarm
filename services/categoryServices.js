@@ -9,67 +9,96 @@ const CategoryModel = require('../models/category');
 const UserModel = require('../models/user');
 
 function listCategory(callback) {
-    CategoryModel.find({}, function (error, result) {
-        if (error) {
+    fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/listCategory?secret=alwaysShine",{
+            method: "GET",
+        }).then(function (response) {
+            return response.json();
+        }).then(function (data) {
+            // console.log('Request succeeded with JSON response', data);
+            return callback(null, data);
+        }).catch(function (error) {
+            console.log('Request failed', error);
             return callback(error);
-        } else {
-            return callback(null, result);
-        }
-    })
+        });
 }
 
 function getCategoryById(id, callback) {
-    console.log(id);
-    CategoryModel.findOne({ _id: ObjectId(id) }, (error, category) => {
-        if (error) {
+    fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getCategoryByName?secret=alwaysShine&categoryId="+id,{
+            method: "GET",
+        }).then(function (response) {
+            return response.json();
+        }).then(function (data) {
+            // console.log('Request succeeded with JSON response', data);
+            return callback(null, data);
+        }).catch(function (error) {
+            console.log('Request failed', error);
             return callback(error);
-        } else {
-            return callback(null, category);
-        }
         });
 }
 
 function getCategoryByName(name, callback) {
-    CategoryModel.findOne({ name }, (error, result) => {
-        if (error) {
+    fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getCategoryByName?secret=alwaysShine&name="+name,{
+            method: "GET",
+        }).then(function (response) {
+            return response.json();
+        }).then(function (data) {
+            // console.log('Request succeeded with JSON response', data);
+            return callback(null, data);
+        }).catch(function (error) {
+            console.log('Request failed', error);
             return callback(error);
-        } else {
-            return callback(null, result);
-        }
-    })
+        });
 }
 
-function create(userEmail, categoryName, callback) {
-    UserModel.find({ email: userEmail }, (error, user) => {
-        if (error) {
+async function create(userEmail, categoryName, callback) {
+    //checking if the user exists or not
+    await fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getUserByEmail?secret=alwaysShine&email="+userEmail, {
+            method: "GET",
+        }).then(function (response) {
+            return response.json();
+        }).then(function (data) {
+            // console.log('Request succeeded with JSON response', data);
+            if (!data) return callback("User Not Registered");
+        }).catch(function (error) {
+            console.log('Request failed', error);
             return callback(error);
-        } else if (!user) {
-            return callback('User not found');
-        } else {
-            CategoryModel.find({ name: categoryName }, (error2, category) => {
-                if (error2) {
-                    return callback(error2);
-                } else if (category) {
-                    return callback('Category already exists');
-                } else {
-                    const userId = user[0]._id;
-                    const newCategory = new CategoryModel({
-                        name: categoryName,
-                        createdBy: userId,
-                        createdDate: Date.now(),
-                        isActive: true,
-                    })
-                    newCategory.save(function (error) {
-                        if (error) {
-                            console.log("----------error while creating category--------");
-                            console.log(error);
-                        }
-                        return callback(null);
-                    })
+        });
+    
+    // checking if the category already exists
+    await fetch(" https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getCategoryByName?secret=alwaysShine&name="+categoryName, {
+            method: "GET",
+        }).then(function (response) {
+            return response.json();
+        }).then(function (data) {
+            // console.log('Request succeeded with JSON response', data);
+            if (data) return callback("Category Exists");
+        }).catch(function (error) {
+            console.log('Request failed', error);
+            return callback(error);
+        });
+    
+    // adding category
+    const reqBody = {
+        name: categoryName,
+        email: userEmail,
+    }
+    fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/createCategory?secret=alwaysShine", {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                        // 'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: JSON.stringify(reqBody)
                 }
-            })
-        }
-    })
+                ).then(function (response) {
+                    return response.json();
+                }).then(function (data) {
+                    console.log('Request succeeded with JSON response', data);
+                    return callback(null, data);
+                }).catch(function (error) {
+                    console.log('Request failed', error);
+                    return callback(error);
+                });
 };
 
 module.exports = {

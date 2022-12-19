@@ -19,60 +19,102 @@ const { encrypt, decrypt } = require('../services/encryptionServices');
 function isAuthentic(req, res, next) {
     const { cipherTextEmail } = req.params;
     const email = decrypt(cipherTextEmail);
-    UserModel.findOne({ email: email }).exec((error, user) => {
-        if (error) {
-            res.send(error);
-        }
-        else {
-            if (user) next();
+    fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getUserByEmail?secret=alwaysShine&email="+email, {
+            method: "GET",
+        }).then(function (response) {
+            return response.json();
+        }).then(function (data) {
+            // console.log('Request succeeded with JSON response', data);
+            if (data) next();
             else res.send("User not Found.\nPlease Log-in.");
-        }
-    })
+        }).catch(function (error) {
+            console.log('Request failed', error);
+            res.send("User not Found.\nPlease Log-in."+error);
+        });
 }
 
 /*-------------------Functions----------------------*/
 function getUser(email, callback) {
-    UserModel.findOne({ email: email }).exec(function (error, user) {
-        if (error) {
-            return callback(true);
-        } else if (!user) {
-            return callback(false, null);
-        } else {
-            return callback(false, user);
-        }
-    })
-}
-
-async function getUserById(id) {
-    try {
-        const user = await UserModel.findOne({ _id: id });
-        return user;
-    } catch (error) {
-        console.log(error);
-        return null;
-    }
-}
-
-function createUser(fullName, email, phone, password, callback) {
-    UserModel.findOne({
-        $or: [
-            { phone: phone },
-            { email: email }
-        ]
-    }, function (error, existingUser) {
-        if (error) {
+    fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getUserByEmail?secret=alwaysShine&email="+email, {
+            method: "GET",
+        }).then(function (response) {
+            return response.json();
+        }).then(function (data) {
+            // console.log('Request succeeded with JSON response', data);
+            if (data) return callback(null, data);
+            else return callback("User Not Found");
+        }).catch(function (error) {
+            console.log('Request failed', error);
             return callback(error);
-        } else if (existingUser) {
-            return callback("Account with given Email or Mobile number already exists");
+        });
+}
+function getUserById(id, callback) {
+     fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getUserById?secret=alwaysShine&userId="+id, {
+            method: "GET",
+        }).then(function (response) {
+            return response.json();
+        }).then(function (data) {
+            // console.log('Request succeeded with JSON response', data);
+            if (data) return callback(null, data);
+            else return callback("User Not Found");
+        }).catch(function (error) {
+            console.log('Request failed', error);
+            return callback(error);
+        });
+}
+
+async function createUser(fullName, email, phone, password, callback) {
+    //checking if the user data already exists
+    const user = await fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getUserByEmailOrPhone?secret=alwaysShine&email="+email+"&phone="+phone, {
+            method: "GET",
+        }).then(function (response) {
+            return response.json();
+        }).then(function (data) {
+            // console.log('Request succeeded with JSON response', data);
+            return  data;
+        }).catch(function (error) {
+            console.log('Request failed', error);
+            return error;
+        });
+    if (user) {
+        return callback("User already exists");
+    }
+
+    // hashing password and adding user
+    bcrypt.genSalt(10, function (saltError, salt) {
+        if (saltError) {
+            return callback(saltError);
         } else {
-            const newUserDbDoc = new UserModel({
-                fullName: fullName,
-                email: email,
-                phone: phone,
-                password: password,
+            bcrypt.hash(password, salt, function (hashError, hash) {
+                if (hashError) {
+                    return callback(hashError);
+                }
+                console.log(hash);
+                const reqBody = {
+                    fullName: fullName,
+                    email: email,
+                    password: hash,
+                    phone: phone,
+                };
+                // console.log(reqBody)
+                fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/createUser?secret=alwaysShine", {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                        // 'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: JSON.stringify(reqBody)
+                }
+                ).then(function (response) {
+                    return response.json();
+                }).then(function (data) {
+                    console.log('Request succeeded with JSON response', data);
+                    return callback(null, data);
+                }).catch(function (error) {
+                    console.log('Request failed', error);
+                    return callback(error);
+                });
             });
-            newUserDbDoc.save();
-            return callback(null);
         }
     });
 }
@@ -172,25 +214,29 @@ function checkVerification(email, code, callback) {
         }
     })
 }
-function signIn(email, password, callback) {
-    UserModel.findOne({ email: email }).exec(function (error, user) {
+async function signIn(email, password, callback) {
+    const user = await fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getUserByEmail?secret=alwaysShine&email="+email, {
+            method: "GET",
+        }).then(function (response) {
+            return response.json();
+        }).then(function (data) {
+            // console.log('Request succeeded with JSON response', data);
+            if (data) return data;
+            else return callback("User Not Found");
+        }).catch(function (error) {
+            console.log('Request failed', error);
+            return callback(error);
+        });
+    if (!(user.isEmailVerified)) {
+        return callback(false, true, false);
+    }
+    bcrypt.compare(password, user.password, function (error, isMatch) {
         if (error) {
-            return callback(true);
-        } else if (!user) {
-            return callback(true);
+            return callback(error)
+        } else if (!isMatch) {
+            return callback("Wrong Password")
         } else {
-            if (!user.isEmailVerified) {
-                return callback(false, true, false);
-            }
-            user.comparePassword(password, function (matchError, isMatch) {
-                if (matchError) {
-                    return callback(true);
-                } else if (!isMatch) {
-                    return callback(true);
-                } else {
-                    return callback(false, true, true);
-                }
-            })
+            return callback(false, true, true);
         }
     })
 }

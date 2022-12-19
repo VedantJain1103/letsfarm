@@ -127,7 +127,7 @@ router.get('/update/:cipherTextItem/:cipherTextEmail',accountsServices.isAuthent
 router.post('/update/:cipherTextItem/:cipherTextEmail',accountsServices.isAuthentic, function (req, res) {
     const { cipherTextItem, cipherTextEmail } = req.params;
     let { name, costPrice, category, sellPrice, discount, description, unit, minimumUnit, availableUnit } = req.body;
-    console.log(req.body)
+    // console.log(req.body) 
     const email = decrypt(cipherTextEmail);
     const itemId = decrypt(cipherTextItem);
     itemsServices.getItemById(itemId, function (error, item) {
