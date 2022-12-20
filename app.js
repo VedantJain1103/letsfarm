@@ -41,7 +41,8 @@ app.use('/items', itemsRouter);
 app.use('/category', categoryRouter);
 
 //Database connection
-const uri = "mongodb+srv://vedant:vedant@cluster0.kuo0csq.mongodb.net/?retryWrites=true&w=majority";
+
+const uri = process.env.MONGODB_URI;
 async function main() {
   const client = new MongoClient(uri);
 
