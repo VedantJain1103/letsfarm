@@ -34,7 +34,7 @@ router.post('/register', async (req, res) => {
                 if (error) {
                     res.render('accounts/register', { error: error, fullName, email, phone });
                 } else {
-                    res.redirect(`/accounts/sendVerificationCode`);
+                    res.redirect(`/accounts/signIn`);
                 }
             });
         } else {

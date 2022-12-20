@@ -9,11 +9,32 @@
             <div class="underline"></div>
         </div>
         <div class="input-box">
-            <input type="text" name="email" placeholder="Email" value=`${email}`  disabled="true" required />
+            <input type="text" name="email" placeholder="Email" value={{email}}  disabled="true" required />
+            <div class="underline"></div>
+        </div>
+        <h2>Address</h2>
+        <div class="input-box">
+            <input type="text" name="addressLine1" placeholder="Line 1" required />
             <div class="underline"></div>
         </div>
         <div class="input-box">
-            <input type="number" name="age" placeholder="Age" required />
+            <input type="text" name="addressLine2" placeholder="Line 2" required />
+            <div class="underline"></div>
+        </div>
+        <div class="input-box">
+            <input type="text" name="addressPinCode" placeholder="PIN Code" required />
+            <div class="underline"></div>
+        </div>
+        <div class="input-box">
+            <input type="text" name="addressCity" placeholder="City" required />
+            <div class="underline"></div>
+        </div>
+        <div class="input-box">
+            <input type="text" name="addressState" placeholder="State" required />
+            <div class="underline"></div>
+        </div>
+        <div class="input-box">
+            <input type="text" name="addressCountry" placeholder="Country" required />
             <div class="underline"></div>
         </div>
         <div class="input-box">
@@ -26,7 +47,7 @@
             <input type="file" name="certificate" placeholder="upload certificate" required />
             <div class="underline"></div>
         </div>
-        <button class="primary">Create </button>
+        <button class="primary">Complete </button>
     </form>
     {{! <button onclick="window.location.href= '/resumes">Cancel</button> }}
     <a href="/users/{{cipherTextEmail}}" class="button">Cancel</a>

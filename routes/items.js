@@ -13,7 +13,7 @@ const itemImageS3 = require('../services/itemImageS3');
 
 router.get('/image/:key', (req, res) => {
     const { key } = req.params;
-    console.log(key)
+    // console.log(key)
     const readStream = itemImageS3.getFileStream(key)
 
     readStream.pipe(res)

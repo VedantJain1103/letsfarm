@@ -18,7 +18,7 @@ const { encrypt, decrypt } = require('../services/encryptionServices');
 
 router.get('/image/:key', (req, res) => {
     const { key } = req.params;
-    console.log(key)
+    // console.log(key)
     const readStream = userImageS3.getFileStream(key)
 
     readStream.pipe(res)
@@ -26,7 +26,7 @@ router.get('/image/:key', (req, res) => {
 
 router.get('/certificate/:key', (req, res) => {
     const { key } = req.params;
-    console.log(key)
+    // console.log(key)
     const readStream = userCertificateS3.getFileStream(key)
 
     readStream.pipe(res)
@@ -35,7 +35,7 @@ router.get('/certificate/:key', (req, res) => {
 router.get('/:cipherTextEmail', accountsServices.isAuthentic, function (req, res, next) {
   const { cipherTextEmail } = req.params;
   const email = decrypt(cipherTextEmail);
-  console.log("Decrypted Email: ", email);
+  // console.log("Decrypted Email: ", email);
   res.send('Hello ' + email);
 });
 
@@ -45,18 +45,26 @@ router.get('/profile/completion/:cipherTextEmail', accountsServices.isAuthentic,
   res.render('accounts/profileCompletion', { cipherTextEmail: cipherTextEmail, email: email });
 });
 
-router.post('/profile/completion/:cipherTextEmail', accountsServices.isAuthentic,itemServices.upload.any(), async function (req, res, next) {
-  const { cipherTextEmail } = req.params;
-  const [ image, certificate ] = req.files;
-  console.log(image, certificate)
-  const email = decrypt(cipherTextEmail);
-  const imageUpload = await userImageS3.uploadFile(image);
-  console.log(`users/image/${imageUpload.key}`); // UPLOADING IMAGE
-  await unlinkFile(image.path);
-  const certificateUpload = await userCertificateS3.uploadFile(certificate); // UPLOADING IMAGE
-  console.log(`users/certificate/${certificateUpload.key}`);
-  await unlinkFile(certificate.path);
-  res.render('accounts/profileCompletion', { cipherTextEmail: cipherTextEmail, email: email });
+router.post('/profile/completion/:cipherTextEmail', accountsServices.isAuthentic, itemServices.upload.any(), async function (req, res, next) {
+  try {
+    const { cipherTextEmail } = req.params;
+    const [image, certificate] = req.files;
+    const { addressLine1, addressLine2, addressPinCode, addressCity, addressState, addressCountry } = req.body;
+    const email = decrypt(cipherTextEmail);
+    await accountsServices.profileCompletion(email, image, certificate, addressLine1, addressLine2, addressPinCode, addressCity, addressState, addressCountry, function (error, success) {
+      if (error) {
+        console.log(error);
+        res.render('accounts/profileCompletion', { error: error, cipherTextEmail: cipherTextEmail, email: email });
+      } else if (success) {
+        res.redirect(`/users/${cipherTextEmail}`);
+      } else {
+        res.render('accounts/profileCompletion', { error: "An Unknown Error Occurred.", cipherTextEmail: cipherTextEmail, email: email });
+      }
+    })
+  } catch (error) {
+    console.log(error);
+    res.send("An error occured");
+  }
 });
 
 

@@ -9,6 +9,13 @@ const uri = "mongodb+srv://vedant:vedant@cluster0.kuo0csq.mongodb.net/letsfarm?r
 const client = new MongoClient(uri);
 const database = client.db("LetUsFarm");
 
+const userImageS3 = require('../services/userImageS3'); 
+const userCertificateS3 = require('../services/userCertificateS3');
+
+const fs = require('fs');
+const util = require('util');
+const unlinkFile = util.promisify(fs.unlink);
+
 const UserModel = require("../models/user")
 const VerificationModel = require('../models/verification');
 const callback = require('callback');
@@ -25,7 +32,10 @@ function isAuthentic(req, res, next) {
             return response.json();
         }).then(function (data) {
             // console.log('Request succeeded with JSON response', data);
-            if (data) next();
+            if (data) {
+                if (data.isProfileComplete||req.route.path=="/profile/completion/:cipherTextEmail") next();
+                else res.redirect(`/users/profile/completion/${cipherTextEmail}`);
+            }
             else res.send("User not Found.\nPlease Log-in.");
         }).catch(function (error) {
             console.log('Request failed', error);
@@ -241,6 +251,7 @@ async function checkVerification(email, code, callback) {
         })
     }
 }
+
 async function signIn(email, password, callback) {
     const user = await fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getUserByEmail?secret=alwaysShine&email="+email, {
             method: "GET",
@@ -268,6 +279,63 @@ async function signIn(email, password, callback) {
     })
 }
 
+async function profileCompletion(email, userImage, userCertificate, addressLine1, addressLine2, addressPinCode, addressCity, addressState, addressCountry, callback) {
+    const user = await fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getUserByEmail?secret=alwaysShine&email="+email, {
+            method: "GET",
+        }).then(function (response) {
+            return response.json();
+        }).then(function (data) {
+            // console.log('Request succeeded with JSON response', data);
+            if (data) return data;
+            else return callback("User Not Found");
+        }).catch(function (error) {
+            console.log('Request failed', error);
+            return callback(error);
+        });
+    if (!user) return callback("User Not Found");
+
+    const awsUserImage = await userImageS3.uploadFile(userImage); // UPLOADING IMAGE
+    // console.log(`users/image/${imageUpload.key}`); 
+    await unlinkFile(userImage.path);
+    const awsUserCertificate = await userCertificateS3.uploadFile(userCertificate); // UPLOADING CERTIFICATE
+    // console.log(`users/certificate/${certificateUpload.key}`);
+    await unlinkFile(userCertificate.path);
+
+    const reqBody = {
+        email: email,
+        awsUserImage: awsUserImage,
+        awsUserCertificate: awsUserCertificate,
+        addressLine1: addressLine1,
+        addressLine2: addressLine2,
+        addressPinCode: addressPinCode,
+        addressCity: addressCity,
+        addressState: addressState,
+        addressCountry: addressCountry,
+    };
+    fetch(
+                "https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/completeProfile?secret=alwaysShine",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        // 'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: JSON.stringify(reqBody),
+                }
+            )
+                .then(function (response) {
+                    return response.json();
+                })
+                .then(function (data) {
+                    console.log(data)
+                    return callback(null,true);
+                })
+                .catch(function (error) {
+                    console.log("Request failed", error);
+                    return callback(error);
+                });
+
+}
 module.exports = {
     isAuthentic,
     getUser,
@@ -276,4 +344,5 @@ module.exports = {
     signIn,
     sendEmailVerification,
     checkVerification,
+    profileCompletion,
 };
