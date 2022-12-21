@@ -19,10 +19,9 @@ router.get('/image/:key', (req, res) => {
     readStream.pipe(res)
 })
 
-router.get('/:cipherTextEmail', accountsServices.isAuthentic, async function (req, res, next) {
+router.get('/:cipherTextEmail', accountsServices.isAuthentic, function (req, res, next) {
     const { cipherTextEmail } = req.params;
     const email = decrypt(cipherTextEmail);
-    try {
         itemsServices.viewItemList(function (error, items) {
             let encItemIds = [];
             if (error) {
@@ -37,10 +36,6 @@ router.get('/:cipherTextEmail', accountsServices.isAuthentic, async function (re
             // res.send(items);
             res.render('item/listItems.ejs', { items, encItemIds, cipherTextEmail });
         });
-    } catch (error) {
-        console.log(error);
-        res.redirect(`/users/${cipherTextEmail}`);
-    }
 });
 
 router.get('/c/:cipherTextEmail', accountsServices.isAuthentic, async function (req, res, next) {

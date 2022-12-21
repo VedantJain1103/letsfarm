@@ -34,8 +34,14 @@ router.post('/register', async (req, res) => {
                 if (error) {
                     res.render('accounts/register', { error: error, fullName, email, phone });
                 } else {
-                    res.redirect(`/accounts/signIn`);
-                }
+                        accountsServices.sendEmailVerification(email, function (error2) {
+                            if (error2) {
+                                res.send(error2);
+                            } else {
+                                res.redirect(`/accounts/${email}/verification`);
+                            }
+                        });
+                    }
             });
         } else {
             res.render('accounts/register', { error: 'Enter a valid Password', fullName, email, phone });
@@ -51,10 +57,16 @@ router.post('/:email/verification', async (req, res) => {
         await accountsServices.checkVerification(email, code, function (error, status) {
             if (error) {
                 console.log(error);
-                res.render('accounts/verfication', { error:error, email:email });
+                accountsServices.sendEmailVerification(email, function (error2) {
+                    if (error2) {
+                        res.render('accounts/verification', { error:error2, email });
+                    } else {
+                        res.render('accounts/verification', { error:error+'. Please enter the new code sent to your email.', email:email });
+                    }
+                });
             } else if (status) {
                 const ciphertextEmail = encrypt(email);;
-                res.redirect(`/users/${ciphertextEmail}`);
+                res.redirect(`/accounts/signIn`);
             }
         })
     } catch (error) {

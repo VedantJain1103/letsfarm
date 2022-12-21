@@ -58,6 +58,7 @@ function getUser(email, callback) {
             return callback(error);
         });
 }
+
 function getUserById(id, callback) {
      fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getUserById?secret=alwaysShine&userId="+id, {
             method: "GET",
@@ -66,6 +67,21 @@ function getUserById(id, callback) {
         }).then(function (data) {
             // console.log('Request succeeded with JSON response', data);
             if (data) return callback(null, data);
+            else return callback("User Not Found");
+        }).catch(function (error) {
+            console.log('Request failed', error);
+            return callback(error);
+        });
+}
+
+function getUserProfileByEmail(email, callback) {
+    fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getUserProfileByEmail?secret=alwaysShine&email="+email, {
+            method: "GET",
+        }).then(function (response) {
+            return response.json();
+        }).then(function (data) {
+            // console.log('Request succeeded with JSON response', data);
+            if (data) return callback(null, data[0]);
             else return callback("User Not Found");
         }).catch(function (error) {
             console.log('Request failed', error);
@@ -265,6 +281,7 @@ async function signIn(email, password, callback) {
             console.log('Request failed', error);
             return callback(error);
         });
+    if (!user) return callback(true);
     if (!(user.isEmailVerified)) {
         return callback(false, true, false);
     }
@@ -340,6 +357,7 @@ module.exports = {
     isAuthentic,
     getUser,
     getUserById,
+    getUserProfileByEmail,
     createUser,
     signIn,
     sendEmailVerification,

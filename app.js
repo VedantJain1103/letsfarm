@@ -16,6 +16,7 @@ require('dotenv/config');
 const hbs = require('hbs');
 
 var indexRouter = require('./routes/index');
+var adminRouter = require('./routes/admin');
 var usersRouter = require('./routes/users');
 var accountsRouter = require('./routes/accounts');
 var itemsRouter = require('./routes/items');
@@ -35,6 +36,7 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
+app.use('/admin', adminRouter);
 app.use('/users', usersRouter);
 app.use('/accounts', accountsRouter);
 app.use('/items', itemsRouter);
@@ -59,7 +61,7 @@ async function main() {
 main().catch(console.error);
 
 mongoose.connect(
-  `mongodb+srv://vedant:vedant@cluster0.kuo0csq.mongodb.net/letsfarm?retryWrites=true&w=majority`,
+  uri,
   {
     useNewUrlParser: true,
     useUnifiedTopology: true
