@@ -17,13 +17,13 @@ router.get('/:cipherTextEmail',accountsServices.isAuthentic, function (req, res,
     })
 });
 
-router.get('/create/:cipherTextEmail',accountsServices.isAuthentic, function (req, res, next) {
+router.get('/create/:cipherTextEmail',accountsServices.isAuthentic, accountsServices.isApproved, function (req, res, next) {
     const { cipherTextEmail } = req.params;
     const email = decrypt(cipherTextEmail);
     res.render('category/create', { cipherTextEmail });
 });
 
-router.post('/create/:cipherTextEmail', accountsServices.isAuthentic, function (req, res, next) {
+router.post('/create/:cipherTextEmail', accountsServices.isAuthentic, accountsServices.isApproved, function (req, res, next) {
     const { name } = req.body;
     const { cipherTextEmail } = req.params;
     const email = decrypt(cipherTextEmail);

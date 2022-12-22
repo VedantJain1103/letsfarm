@@ -43,6 +43,23 @@ function isAuthentic(req, res, next) {
         });
 }
 
+function isApproved(req, res, next) {
+    const { cipherTextEmail } = req.params;
+    const email = decrypt(cipherTextEmail);
+    fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getUserProfileByEmail?secret=alwaysShine&email=" + email, {
+        method: "GET",
+    }).then(function (response) {
+        return response.json();
+    }).then(function (data) {
+        if (!data) res.send("User Not Found");
+        const [user] = data;
+        if(!user.isReviewed) res.send("Your account is under review. Action not available")
+        const [latestReview] = user.review.slice(-1);
+        if(latestReview === "Rejected") res.send("Your account is not approved. Action not available.")
+        else next();
+    })
+}
+
 /*-------------------Functions----------------------*/
 function getUser(email, callback) {
     fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getUserByEmail?secret=alwaysShine&email="+email, {
@@ -355,6 +372,7 @@ async function profileCompletion(email, userImage, userCertificate, addressLine1
 }
 module.exports = {
     isAuthentic,
+    isApproved,
     getUser,
     getUserById,
     getUserProfileByEmail,

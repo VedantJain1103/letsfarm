@@ -42,6 +42,22 @@ var storage = multer.diskStorage({
 var upload = multer({ storage: storage });
 
 //
+/*-------------middleware------------*/
+
+/*------------Function---------------*/
+function viewItemUnits(callback) {
+    fetch(" https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/listItemUnits?secret=alwaysShine", {
+            method: "GET",
+        }).then(function (response) {
+            return response.json();
+        }).then(function (data) {
+            // console.log('Request succeeded with JSON response', data);
+            return callback(null, data);
+        }).catch(function (error) {
+            return callback(error);
+            console.log('Request failed', error);
+        });
+}
 
 function viewItemList(callback) {
         fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/listItems?secret=alwaysShine", {
@@ -160,50 +176,78 @@ async function createItem(userEmail, itemName, category, image, costPrice, sellP
                 });
 };
 
-function updateItem(itemId, name, costPrice, category, sellPrice, discount, description, unit, minimumUnit, availableUnit, callback) {
-
-        ItemModel.updateOne(
-            { "_id": ObjectId(itemId) },
-            {
-                $set: {
-                    name, costPrice, categoryId: category._id, sellPrice, discount, description, minimumUnit, availableUnit, unit,
-                }
-            },
-            { new: true },
-            (error, result) => {
-                if (error) {
-                    callback(error);
-                } else {
-                    callback(null, result);
-                }
-            }
-        );
+function updateItem(email, itemId, name, costPrice, category, discount, description, availableUnit, callback) {
+    if (!itemId || costPrice < 0 ||  discount < 0 || availableUnit < 0 || discount > 100) {
+        return callback("Invalid Data");
+    }
+    const reqBody = {
+        email: email,
+        itemId: itemId,
+        name: name,
+        costPrice: costPrice,
+        categoryName: category,
+        discount: discount,
+        description: description,
+        availableUnit: availableUnit
+    }
+    fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/updateItem?secret=alwaysShine", {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+            // 'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: JSON.stringify(reqBody)
+    }
+    ).then(function (response) {
+        return response.json();
+    }).then(function (data) {
+        // console.log('Request succeeded with JSON response', data);
+        if (data === "ItemId required") return callback("ItemId required");
+        if (data === "Item Not Found") return callback("Item Not Found");
+        if (data === "Invalid Authentication") return callback("Invalid Authentication");
+        // console.log(data);
+        return callback(null, data);
+    }).catch(function (error) {
+        console.log('Request failed', error);
+        return callback(error);
+    });
 }
 
-async function updateItemImage(itemId, image, callback) {
-    const imageResult = await uploadFile(image);
+async function updateItemImage(email, itemId, image, callback) {
+    const imageResult = await itemImageS3.uploadFile(image);
     await unlinkFile(image.path);
     // console.log(imageResult);
-    ImageModel.updateOne(
-        { "itemId": ObjectId(itemId) },
-        {
-            $set: {
-                img: `/items/image/${imageResult.key}`
-            }
+    const reqBody = {
+        email: email,
+        itemId: itemId,
+        imageLink: `/items/image/${imageResult.key}`,
+    }
+    fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/updateItemImage?secret=alwaysShine", {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+            // 'Content-Type': 'application/x-www-form-urlencoded',
         },
-        { new: true },
-        (error, result) => {
-            if (error) {
-                return callback(error);
-            } else {
-                return callback(null, result);
-            }
-        }
-    )
+        body: JSON.stringify(reqBody)
+    }
+    ).then(function (response) {
+        return response.json();
+    }).then(function (data) {
+        // console.log('Request succeeded with JSON response', data);
+        if (data === "ItemId required") return callback("ItemId required");
+        if (data === "Item Not Found") return callback("Item Not Found");
+        if (data === "Invalid Authentication") return callback("Invalid Authentication");
+        console.log(data);
+        return callback(null, data);
+    }).catch(function (error) {
+        console.log('Request failed', error);
+        return callback(error);
+    });
 }
 
 module.exports = {
     upload,
+    viewItemUnits,
     viewItemListOfUser,
     viewItemList,
     getItemById,

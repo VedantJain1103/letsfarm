@@ -57,10 +57,10 @@
             Certificate
             <embed src={{user.certificate.certificate}} width=100% height=750px />
         </div>
-    <form action="/admin/view/{{cipherTextEmail}}/approve" method="post" enctype="multipart/form-data">
+    <form action="/admin/user/view/{{cipherTextEmail}}/approve" method="post" enctype="multipart/form-data">
         <button class="primary" style="background-color: rgba(0, 247, 0, 0.747);">Approve</button>
     </form>
-    <form action="/admin/view/{{cipherTextEmail}}/reject" method="post">
+    <form action="/admin/user/view/{{cipherTextEmail}}/reject" method="post">
     <div class="input-box">
         <input type="text" name="rejectionReason" placeholder="Reason for rejecting"
             required />

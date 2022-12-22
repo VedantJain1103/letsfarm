@@ -47,31 +47,7 @@
             <input type="file" name="certificate" placeholder="upload certificate" required />
             <div class="underline"></div>
         </div>
-        <button onclick="getlocation()">Click me</button>
-        {{!-- <div id="location"></div> --}}
-        <div class="input-box">
-            Address Location
-            <input type="text" id = "location" name="geolocation" placeholder="Your Location" disabled="true" required />
-            <div class="underline"></div>
-        </div>
-        <script>
-            var x = document.getElementById("location");
-            function getlocation() {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(showPosition)
-                }
-                else {
-                    alert("Sorry! your browser is not supporting")
-                }
-            }
-
-            function showPosition(position) {
-                var x = (" + "Latitude: " + position.coords.latitude + ", " + "Longitude: " + position.coords.longitude + ")";
-                document.getElementById("location").placeholder = x;
-            }  
-        </script>
-        
-        <button class="primary">Get Your current location </button>
+        <button class="primary">Continue </button>
     </form>
     {{! <button onclick="window.location.href= '/resumes">Cancel</button> }}
     <a href="/users/{{cipherTextEmail}}" class="button">Cancel</a>
