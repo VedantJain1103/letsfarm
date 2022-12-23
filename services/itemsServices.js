@@ -101,7 +101,7 @@ function getItemById(id, callback) {
         });
 }
 
-async function createItem(userEmail, itemName, category, image, costPrice, sellPrice, discount, description, unit, minUnit, availUnit, callback) {
+async function createItem(userEmail, itemName, category, image, costPrice, discount, description, availUnit,months, callback) {
     //checking if the user exists or not
     await fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getUserByEmail?secret=alwaysShine&email="+userEmail, {
             method: "GET",
@@ -130,7 +130,7 @@ async function createItem(userEmail, itemName, category, image, costPrice, sellP
     
     //adding item data
     const reqBody = {
-        userEmail:userEmail, itemName:itemName, categoryName: category, costPrice: costPrice, sellPrice:sellPrice, discount:discount, description:description, unit:unit, minUnit:minUnit, availUnit:availUnit
+        userEmail:userEmail, itemName:itemName, categoryName: category, costPrice: costPrice, discount:discount, description:description, availUnit:availUnit, months: months
     }
     const item = await fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/createItem?secret=alwaysShine", {
                     method: "POST",
@@ -150,6 +150,7 @@ async function createItem(userEmail, itemName, category, image, costPrice, sellP
                     return callback(error);
                 });
     //adding item image
+    // console.log(item);
     const result = await itemImageS3.uploadFile(image); // UPLOADING IMAGE
     await unlinkFile(image.path); //DELETING FROM SERVER DEVICE STORAGE
     const imageReqBody = {

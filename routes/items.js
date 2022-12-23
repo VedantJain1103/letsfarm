@@ -87,16 +87,16 @@ router.get('/create/:cipherTextEmail',accountsServices.isAuthentic, accountsServ
 });
 
 router.post('/create/:cipherTextEmail',accountsServices.isAuthentic,accountsServices.isApproved, itemsServices.upload.single('image'), function (req, res, next) {
-    const { name, costPrice, category, discount, description, availUnit } = req.body;
+    const { name, costPrice, category, discount, description, availUnit, months } = req.body;
     console.log(req.body);
     const image = req.file;
     const { cipherTextEmail } = req.params;
     const email = decrypt(cipherTextEmail);
-    itemsServices.createItem(email, name, category, image, costPrice, sellPrice, discount, description, unit, minUnit, availUnit, function (error, success) {
+    itemsServices.createItem(email, name, category, image, costPrice, discount, description, availUnit, months, function (error, success) {
         if (error) {
             console.log("----------Error occurred--------------",error);
         }
-        res.redirect(`/items/${cipherTextEmail}`);
+        res.redirect(`/items/c/${cipherTextEmail}`);
     })
 });
 
