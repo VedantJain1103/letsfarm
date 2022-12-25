@@ -48,6 +48,7 @@ router.get('/c/:cipherTextEmail', accountsServices.isAuthentic, async function (
                 console.log(error);
             }
             else {
+                // console.log(items);
                 items.forEach(item => {
                     const encId = encrypt((item._id).toString());
                     encItemIds.push(encId);
@@ -86,13 +87,14 @@ router.get('/create/:cipherTextEmail',accountsServices.isAuthentic, accountsServ
     });
 });
 
-router.post('/create/:cipherTextEmail',accountsServices.isAuthentic,accountsServices.isApproved, itemsServices.upload.single('image'), function (req, res, next) {
+router.post('/create/:cipherTextEmail',accountsServices.isAuthentic,accountsServices.isApproved, itemsServices.upload.any(), async function (req, res, next) {
     const { name, costPrice, category, discount, description, availUnit, months } = req.body;
-    console.log(req.body);
-    const image = req.file;
+    // console.log(req);
+    const images = req.files;
     const { cipherTextEmail } = req.params;
+    // res.send("OKAUY");
     const email = decrypt(cipherTextEmail);
-    itemsServices.createItem(email, name, category, image, costPrice, discount, description, availUnit, months, function (error, success) {
+    await itemsServices.createItem(email, name, category, images, costPrice, discount, description, availUnit, months, function (error, success) {
         if (error) {
             console.log("----------Error occurred--------------",error);
         }

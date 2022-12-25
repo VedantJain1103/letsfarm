@@ -19,6 +19,7 @@ const util = require('util');
 const unlinkFile = util.promisify(fs.unlink);
 var path = require('path');
 var multer = require('multer');
+const user = require('../models/user');
 
 var storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -101,80 +102,100 @@ function getItemById(id, callback) {
         });
 }
 
-async function createItem(userEmail, itemName, category, image, costPrice, discount, description, availUnit,months, callback) {
+async function createItem(userEmail, itemName, category, images, costPrice, discount, description, availUnit, months, callback) {
     //checking if the user exists or not
-    await fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getUserByEmail?secret=alwaysShine&email="+userEmail, {
-            method: "GET",
-        }).then(function (response) {
-            return response.json();
-        }).then(function (data) {
-            // console.log('Request succeeded with JSON response', data);
-            if (!data) return callback("User Not Registered");
-        }).catch(function (error) {
-            console.log('Request failed', error);
-            return callback(error);
-        });
+    await fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getUserByEmail?secret=alwaysShine&email=" + userEmail, {
+        method: "GET",
+    }).then(function (response) {
+        return response.json();
+    }).then(function (data) {
+        // console.log('Request succeeded with JSON response', data);
+        if (!data) return callback("User Not Registered");
+        return data;
+    }).catch(function (error) {
+        console.log('Request failed', error);
+        return callback(error);
+    });
     
     // checking if the catgeory exists or not
-    await fetch(" https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getCategoryByName?secret=alwaysShine&name="+category, {
-            method: "GET",
-        }).then(function (response) {
-            return response.json();
-        }).then(function (data) {
-            // console.log('Request succeeded with JSON response', data);
-            if (!data) return callback("Category Does not Exists");
-        }).catch(function (error) {
-            console.log('Request failed', error);
-            return callback(error);
-        });
-    
+    await fetch(" https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/getCategoryByName?secret=alwaysShine&name=" + category, {
+        method: "GET",
+    }).then(function (response) {
+        return response.json();
+    }).then(function (data) {
+        // console.log('Request succeeded with JSON response', data);
+        if (!data) return callback("Category Does not Exists");
+    }).catch(function (error) {
+        console.log('Request failed', error);
+        return callback(error);
+    });
+
+    let arrayMonths = [];
+    if (Array.isArray(months)) arrayMonths = months;
+    else arrayMonths.push(months); 
     //adding item data
     const reqBody = {
-        userEmail:userEmail, itemName:itemName, categoryName: category, costPrice: costPrice, discount:discount, description:description, availUnit:availUnit, months: months
+        userEmail: userEmail, itemName: itemName, categoryName: category, costPrice: costPrice, discount: discount, description: description, availUnit: availUnit, months: arrayMonths
     }
     const item = await fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/createItem?secret=alwaysShine", {
-                    method: "POST",
-                    headers: {
-                        'Content-Type': 'application/json'
-                        // 'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: JSON.stringify(reqBody)
-                }
-                ).then(function (response) {
-                    return response.json();
-                }).then(function (data) {
-                    // console.log('Request succeeded with JSON response', data);
-                    return  data;
-                }).catch(function (error) {
-                    console.log('Request failed', error);
-                    return callback(error);
-                });
-    //adding item image
-    // console.log(item);
-    const result = await itemImageS3.uploadFile(image); // UPLOADING IMAGE
-    await unlinkFile(image.path); //DELETING FROM SERVER DEVICE STORAGE
-    const imageReqBody = {
-        itemId: item.insertedId,
-        imageLink: `/items/image/${result.key}`,
-        email: userEmail,
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+            // 'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: JSON.stringify(reqBody)
     }
+    ).then(function (response) {
+        return response.json();
+    }).then(function (data) {
+        // console.log('Request succeeded with JSON response', data);
+        console.log(data);
+        return data;
+    }).catch(function (error) {
+        console.log('Request failed', error);
+        return callback(error);
+    });
+
+    //adding item image
+    // console.log(images);
+    let imagesReqBody = [];
+    for (let i = 0; i < images.length; ++i) {
+        const image = images[i];
+        const result = await itemImageS3.uploadFile(image);
+        await unlinkFile(image.path);
+        let isDisplayImage = false;
+        if (image.fieldname == "image") isDisplayImage = true;
+        const imageReqBody = {
+            imageLink: `/items/image/${result.Key}`,
+            isDisplayImage: isDisplayImage,
+        };
+        // console.log(imageReqBody,result);
+        imagesReqBody.push(imageReqBody);
+    }
+    // console.log(imagesReqBody)
+    const itemImageReqBody = {
+        images: imagesReqBody,
+        itemId: item.insertedId,
+        email: userEmail,
+    };
     await fetch("https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/createItemImage?secret=alwaysShine", {
-                    method: "POST",
-                    headers: {
-                        'Content-Type': 'application/json'
-                        // 'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: JSON.stringify(imageReqBody)
-                }
-                ).then(function (response) {
-                    return response.json();
-                }).then(function (data) {
-                    // console.log('Request succeeded with JSON response', data);
-                    return callback(null, data);
-                }).catch(function (error) {
-                    console.log('Request failed', error);
-                    return callback(error);
-                });
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+            // 'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: JSON.stringify(itemImageReqBody)
+    }
+    ).then(function (response) {
+        return response.json();
+    }).then(function (data) {
+        // console.log('Request succeeded with JSON response', data);
+        console.log(data);
+        return callback(null, data);
+    }).catch(function (error) {
+        console.log('Request failed', error);
+        return callback(error);
+    });
 };
 
 function updateItem(email, itemId, name, costPrice, category, discount, description, availableUnit, callback) {

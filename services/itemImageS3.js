@@ -27,6 +27,18 @@ function uploadFile(file) {
 }
 exports.uploadFile = uploadFile
 
+function uploadMultipleFile(file) {
+    const fileStream = fs.createReadStream(file.path)
+
+    const uploadParams = {
+        Bucket: bucketName,
+        Body: fileStream,
+        Key: file.filename
+    }
+    return s3.upload(uploadParams).promise()
+}
+exports.uploadMultipleFile = uploadMultipleFile
+
 //download image
 function getFileStream(fileKey) {
     const downloadParams = {

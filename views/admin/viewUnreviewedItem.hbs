@@ -27,9 +27,11 @@
             <div class="underline"></div>
         </div>
         description
+        {{#each item.images}}
         <div>
-            <img src = "{{item.image.img}}" height=500px width=500px>
+            <img src = "{{this.img}}" height=500px width=500px>
         </div>
+        {{/each}}
         <div class="input-box">
             <input type="number" value={{item.availableUnit}} disabled="true" required />
             <div class="underline"></div>
