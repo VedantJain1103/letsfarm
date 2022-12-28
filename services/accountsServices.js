@@ -1,8 +1,8 @@
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const bcrypt = require('bcrypt');
-const sgMail = require('@sendgrid/mail')
+const Sib = require('sib-api-v3-sdk')
+require('dotenv').config()
 const dotenv = require('dotenv');
-require('dotenv').config();
 
 
 const uri = process.env.MONGODB_URI;
@@ -175,8 +175,8 @@ function sendEmailVerification(email, callback) {
         userEmail: email,
         code: code
     };
-    // sendMail(email, code);
-    console.log(email, code);
+    sendMail(email, code);
+    // console.log(email, code);
     fetch(
         "https://ap-south-1.aws.data.mongodb-api.com/app/letusfarm-fuadi/endpoint/createVerification?secret=alwaysShine",
         {
@@ -202,24 +202,36 @@ function sendEmailVerification(email, callback) {
 }
 
 function sendMail(email, code) {
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-    console.log(email, code);
-    const msg = {
-        to: email, // Change to your recipient
-        from: 'vedantjain35@gmail.com', // Change to your verified sender
-        subject: 'Emaill Verification',
-        text: `Your email verifcation code is ${code}`,
-        html: `<h1>Thank you for registering</h1><br><strong>Your email verifcation code is ${code}</strong><br>
-        This code will expire in 10 minutes`,
-    }
-    sgMail
-        .send(msg)
-        .then(() => {
-            console.log('Email sent')
+    const client = Sib.ApiClient.instance;
+    const apiKey = client.authentications['api-key'];
+    apiKey.apiKey = process.env.SENDINBLUE_API_KEY;
+
+    const tranEmailApi = new Sib.TransactionalEmailsApi()
+    const sender = {
+        email: 'vedantjain1008@gmail.com',
+        name: 'Vedant',
+    };
+    const receivers = [
+        {
+            email: email,
+        },
+    ];
+
+    tranEmailApi
+        .sendTransacEmail({
+            sender,
+            to: receivers,
+            subject: 'Verification Code',
+            textContent: `
+        Thankyou for registering on LetUsFarm.
+        `,
+            htmlContent: `
+        Thank you for registering at LetUsFarm. Your one time verification code is -
+            <h1>${code}</h1>
+        This is a one time verification code.`
         })
-        .catch((error) => {
-            console.error(error)
-        })
+        .then(console.log)
+        .catch(console.log);
 }
 
 async function checkVerification(email, code, callback) {
