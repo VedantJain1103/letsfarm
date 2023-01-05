@@ -11,6 +11,7 @@ var bodyParser = require('body-parser');
 var fs = require('fs');
 var path = require('path');
 require('dotenv/config');
+require('dotenv').config()
 
 
 const hbs = require('hbs');

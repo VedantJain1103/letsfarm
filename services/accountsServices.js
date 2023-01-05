@@ -222,13 +222,11 @@ function sendMail(email, code) {
             sender,
             to: receivers,
             subject: 'Verification Code',
-            textContent: `
-        Thankyou for registering on LetUsFarm.
-        `,
             htmlContent: `
-        Thank you for registering at LetUsFarm. Your one time verification code is -
+        Your one time verification code is -
             <h1>${code}</h1>
-        This is a one time verification code.`
+        This is a one time verification code.
+        Thank you for registering at LetUsFarm`
         })
         .then(console.log)
         .catch(console.log);
